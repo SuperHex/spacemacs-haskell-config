@@ -36,31 +36,24 @@
     company-ghc
     hasktags)
   "The list of Lisp packages required by the haskell layer.
-
 Each entry is either:
-
 1. A symbol, which is interpreted as a package to be installed, or
-
 2. A list of the form (PACKAGE KEYS...), where PACKAGE is the
     name of the package to be installed or loaded, and KEYS are
     any number of keyword-value-pairs.
-
     The following keys are accepted:
-
     - :excluded (t or nil): Prevent the package from being loaded
       if value is non-nil
-
     - :location: Specify a custom installation location.
       The following values are legal:
-
       - The symbol `elpa' (default) means PACKAGE will be
         installed using the Emacs package manager.
-
       - The symbol `local' directs Spacemacs to load the file at
         `./local/PACKAGE/PACKAGE.el'
-
       - A list beginning with the symbol `recipe' is a melpa
-        recipe.  See: https://github.com/milkypostman/melpa#recipe-format")
+        recipe.  See: https://github.com/milkypostman/melpa#recipe-format"
+)
+
 (defun haskell/init-haskell-mode ()
   (use-package haskell-mode)
   :config
@@ -69,6 +62,8 @@ Each entry is either:
     '(haskell-process-suggest-remove-import-lines t)
     '(haskell-process-auto-import-loaded-modules t)
     '(haskell-process-log t)
+    ;; company ghc
+    '(company-ghc-show-info t)
     ;; cabal repl
     '(haskell-process-type 'cabal-repl))
     ;; key bindings
@@ -84,25 +79,28 @@ Each entry is either:
     (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
     (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
     (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
-    (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal))))
+    (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))) 
 
 (defun haskell/init-ghc ()
-  (use-package ghc))
+  (use-package ghc)
+  ;:init
+  ;(let ((my-cabal-path (expand-file-name "~/.cabal/bin")))
+    ;(setenv "PATH" (concat my-cabal-path ":" (getenv "PATH")))
+    ;(add-to-list 'exec-path my-Cabal-Path`))
+  :config
+  (autoload 'ghc-init  "ghc" nil t)
+  (autoload 'ghc-debug "ghc" nil t)
+  (add-hook 'haskell-mode-hook (lambda () (ghc-init)) )
+  )
 
 (defun haskell/init-shm ()
-  (use-package shm))
+  (use-package shm)
+  :config
+  (add-hook 'haskell-mode-hook 'structured-haskell-mode))
 
 (defun haskell/init-company-ghc ()
   (use-package company-ghc)
   :init
   (require 'company)
   (add-hook 'after-init-hook 'global-company-mode)
-
-  (add-to-list 'company-backends 'company-ghc)
-  (custom-set-variables '(company-ghc-show-info t))
-  )
-
-(defun haskell/init-hasktags ()
-  (use-package hasktags))
-
-;;; packages.el ends here
+  (add-to-list 'company-backends 'company-ghc))
