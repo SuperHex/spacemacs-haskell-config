@@ -34,7 +34,8 @@
     ghc
     shm
     company-ghc
-    hasktags)
+    hasktags
+    hindent)
   "The list of Lisp packages required by the haskell layer.
 Each entry is either:
 1. A symbol, which is interpreted as a package to be installed, or
@@ -56,8 +57,14 @@ Each entry is either:
 
 (defun haskell/init-haskell-mode ()
   (use-package haskell-mode)
+  :init
+  (require 'haskell-interactive-mode)
+  (require 'haskell-process)
   :config
-  (define-key haskell-mode-map [f8] 'haskell-navigate-imports)
+  (turn-on-haskell-indent)
+  ;; enable module templates
+  (add-hook 'haskell-mode-hook 'haskell-auto-insert-module-template)
+
   (custom-set-variables
     '(haskell-process-suggest-remove-import-lines t)
     '(haskell-process-auto-import-loaded-modules t)
@@ -65,28 +72,33 @@ Each entry is either:
     ;; company ghc
     '(company-ghc-show-info t)
     ;; cabal repl
-    '(haskell-process-type 'cabal-repl))
+    '(haskell-process-type 'cabal-repl)
+    ;; autoformatting on save
+    '(haskell-stylish-on-save t)
+    ;; import settings
+    '(haskell-process-suggest-remove-import t)
+    '(haskell-process-add-cabal-autogen t))
     ;; key bindings
-  (eval-after-load 'haskell-mode '(progn
-    (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
-    (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-    (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
-    (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
-    (define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
-    (define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)
-    (define-key haskell-mode-map (kbd "SPC") 'haskell-mode-contextual-space)))
-  (eval-after-load 'haskell-cabal '(progn
-    (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-    (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
-    (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
-    (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))) 
+  (define-key haskell-mode-map [f8] 'haskell-navigate-imports)
+  (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
+  (define-key haskell-mode-map (kbd "C-`") 'haskell-interactive-bring)
+  (define-key haskell-mode-map (kbd "C-c C-t") 'haskell-process-do-type)
+  (define-key haskell-mode-map (kbd "C-c C-i") 'haskell-process-do-info)
+  (define-key haskell-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
+  (define-key haskell-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
+  (define-key haskell-mode-map (kbd "C-c c") 'haskell-process-cabal)
+  (define-key haskell-mode-map (kbd "SPC") 'haskell-mode-contextual-space)
+  (define-key haskell-cabal-mode-map (kbd "C-`") 'haskell-interactive-bring)
+  (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
+  (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
+  (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)
+  ;; jump to defination using hybrid approch
+  (define-key haskell-mode-map (kbd "M-.") 'haskell-mode-jump-to-def-or-tag)
+  
+  )
 
 (defun haskell/init-ghc ()
   (use-package ghc)
-  ;:init
-  ;(let ((my-cabal-path (expand-file-name "~/.cabal/bin")))
-    ;(setenv "PATH" (concat my-cabal-path ":" (getenv "PATH")))
-    ;(add-to-list 'exec-path my-Cabal-Path`))
   :config
   (autoload 'ghc-init  "ghc" nil t)
   (autoload 'ghc-debug "ghc" nil t)
@@ -94,9 +106,7 @@ Each entry is either:
   )
 
 (defun haskell/init-shm ()
-  (use-package shm)
-  :config
-  (add-hook 'haskell-mode-hook 'structured-haskell-mode))
+  (use-package shm))
 
 (defun haskell/init-company-ghc ()
   (use-package company-ghc)
@@ -104,3 +114,6 @@ Each entry is either:
   (require 'company)
   (add-hook 'after-init-hook 'global-company-mode)
   (add-to-list 'company-backends 'company-ghc))
+
+(defun haskell/init-hindent ()
+  (use-package hindent))
